@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOOL MD5 - Phân Tích Thuật Toán MD5</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cyber: {
+              bg: '#060a12',
+              card: '#0d1424',
+              border: '#1e293b',
+              cyan: '#06b6d4',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #080507;
+      background-image: 
+        radial-gradient(ellipse 90% 42% at 50% 0%, rgba(145, 16, 36, 0.35) 0%, rgba(75, 8, 20, 0.14) 52%, transparent 100%),
+        linear-gradient(to right, rgba(225, 29, 72, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(225, 29, 72, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 28px 28px, 28px 28px;
+      color: #f8fafc;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d070a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2d141c;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4c1d2b;
+    }
+
+    .crimson-card {
+      background: rgba(18, 11, 14, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(225, 29, 72, 0.25);
+      box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .pill-glow {
+      box-shadow: 0 0 25px -4px rgba(225, 29, 72, 0.32);
+    }
+
+    .btn-crimson-main {
+      background: linear-gradient(135deg, #d91c38 0%, #991127 100%);
+      box-shadow: 0 6px 24px -2px rgba(217, 28, 56, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .btn-crimson-main:hover {
+      background: linear-gradient(135deg, #e62240 0%, #ad142d 100%);
+      box-shadow: 0 8px 28px -1px rgba(230, 34, 64, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .title-md5-glow {
+      text-shadow: 0 0 24px rgba(225, 29, 72, 0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center font-sans antialiased selection:bg-rose-500/30 selection:text-rose-200 px-4 py-6 sm:py-10">
+
+  <!-- Toast Notification (Thay thế alert) -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[#160b0f]/95 border border-rose-500/40 text-slate-100 shadow-2xl backdrop-blur-md">
+      <span id="toast-icon" class="text-rose-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </span>
+      <span id="toast-msg" class="text-xs sm:text-sm font-medium">Thông báo</span>
+    </div>
+  </div>
+
+  <!-- Centered Mobile-First Container (max-w-[460px]) -->
+  <div class="w-full max-w-[460px] flex flex-col gap-5">
+
+    <!-- 1. HEADER SECTION (Giống ảnh tham chiếu) -->
+    <header class="flex flex-col items-center text-center pt-1 pb-1">
+      <!-- Top Pill Badge -->
+      <div class="inline-flex items-center justify-center px-5 py-1.5 rounded-full bg-[#1e090f]/90 border border-rose-500/30 pill-glow mb-3">
+        <span class="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-rose-300/90">
+          HỆ THỐNG PHÂN TÍCH CORE VIP
+        </span>
+      </div>
+
+      <!-- Main Title: TOOL (White) + MD5 (Crimson Red) -->
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3.5 select-none">
+        <span class="text-white">TOOL</span>
+        <span class="text-[#e11d48] title-md5-glow ml-1">MD5</span>
+      </h1>
+
+      <!-- Telegram Contact Pill -->
+      <div class="inline-flex flex-wrap items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#0d0609]/95 border border-rose-900/60 pill-glow text-xs sm:text-[13px]">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e11d48] shadow-[0_0_8px_#e11d48] mr-1"></span>
+        <span class="text-white font-semibold">• Telegram :</span>
+        <a
+          href="https://t.me/tooltx"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 font-bold text-[#f43f5e] hover:text-rose-300 transition"
+        >
+          <span>@tooltx</span>
+          <svg class="w-3.5 h-3.5 opacity-85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+          </svg>
+        </a>
+        <a
+          href="https://t.me/giaosu02"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 font-bold text-[#f43f5e] hover:text-rose-300 transition ml-1"
+        >
+          <span>@giaosu02</span>
+          <svg class="w-3.5 h-3.5 opacity-85" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- 2. CARD 1: KHUNG NHẬP LIỆU -->
+    <section class="crimson-card rounded-2xl p-4 sm:p-5 space-y-3.5">
+      <!-- Card Header Row -->
+      <div class="flex items-center justify-between">
+        <label for="md5-input" class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-white">
+          <svg class="w-4 h-4 text-[#e11d48]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+          </svg>
+          <span>NHẬP CHUỖI MÃ MD5</span>
+        </label>
+        <span
+          id="char-counter"
+          class="px-2.5 py-0.5 rounded-md bg-[#1e1519] border border-white/10 font-mono text-[11px] font-semibold text-slate-300 transition-colors"
+        >
+          0 / 32
+        </span>
+      </div>
+
+      <!-- Input Field -->
+      <div class="relative">
+        <input
+          type="text"
+          id="md5-input"
+          maxlength="64"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Dán mã MD5 32 ký tự (0-9, a-f) tại đây..."
+          class="w-full bg-[#090608] border border-white/10 focus:border-[#e11d48]/70 rounded-[10px] px-3.5 py-3 font-mono text-xs sm:text-[13px] text-rose-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition-all"
+        />
+      </div>
+
+      <!-- Two Equal Action Buttons: Dán Nhanh & Xóa -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <button
+          id="btn-paste"
+          type="button"
+          class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[10px] bg-[#230c12] hover:bg-[#2f1018] border border-rose-500/25 text-white text-xs sm:text-[13px] font-semibold active:scale-[0.98] transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-[#f43f5e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          <span>Dán Nhanh</span>
+        </button>
+
+        <button
+          id="btn-clear"
+          type="button"
+          class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[10px] bg-[#1e1e24] hover:bg-[#282830] border border-white/10 text-white text-xs sm:text-[13px] font-semibold active:scale-[0.98] transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          <span>Xóa</span>
+        </button>
+      </div>
+
+      <!-- Main Full-Width Analyze Button -->
+      <button
+        id="btn-analyze"
+        type="button"
+        class="w-full py-3.5 px-4 rounded-xl btn-crimson-main text-white font-extrabold text-sm tracking-wide uppercase flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>PHÂN TÍCH MD5</span>
+      </button>
+
+      <!-- Compact Validation Error Message (Hidden by default, shown on invalid submit) -->
+      <div
+        id="error-notice"
+        class="hidden px-3 py-2 rounded-lg bg-rose-950/60 border border-rose-500/40 text-center font-mono text-[11px] text-rose-300 leading-relaxed"
+      >
+        TOOL MD5 - VUI LÒNG GỬI MÃ MD5 ĐỂ PHÂN TÍCH
+      </div>
+    </section>
+
+    <!-- 3. RESULT SECTION (Appears smoothly between Card 1 and Card 2) -->
+    <section id="result-section" class="hidden transition-all duration-300">
+      <div id="result-card" class="crimson-card rounded-2xl p-4 sm:p-5 border border-rose-500/45 shadow-[0_0_30px_-6px_rgba(225,29,72,0.4)] space-y-4">
+        
+        <!-- Top Status Bar -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <span class="text-[11px] font-mono uppercase tracking-wider text-rose-300/80 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            KẾT QUẢ PHÂN TÍCH
+          </span>
+          <span id="analyzed-hash-short" class="font-mono text-[11px] text-slate-400">
+            MD5: ----...----
+          </span>
+        </div>
+
+        <!-- Highlighted Prediction Display -->
+        <div class="bg-[#090608] border border-rose-500/25 rounded-xl p-4 space-y-3.5">
+          <!-- Dự Đoán Row -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs sm:text-sm font-mono text-slate-300">Dự Đoán :</span>
+            <div class="flex items-center gap-2">
+              <span id="pred-full-label" class="text-xl sm:text-2xl font-black tracking-wide text-amber-400">
+                TÀI
+              </span>
+              <span id="pred-short-badge" class="px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                T
+              </span>
+            </div>
+          </div>
+
+          <!-- Độ Tin Cậy Row + Progress Bar -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs sm:text-sm font-mono">
+              <span class="text-slate-300">Độ Tin Cậy :</span>
+              <span id="confidence-val" class="font-extrabold text-[#f43f5e] text-base">75%</span>
+            </div>
+            <div class="w-full h-2 bg-[#1c1014] rounded-full overflow-hidden border border-white/5">
+              <div
+                id="confidence-bar"
+                class="h-full bg-gradient-to-r from-[#e11d48] via-[#f43f5e] to-amber-400 rounded-full transition-all duration-500"
+                style="width: 75%"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Vào Tiền Row -->
+          <div class="flex items-center justify-between pt-1 border-t border-white/5 text-xs sm:text-sm font-mono">
+            <span class="text-slate-300">Vào Tiền :</span>
+            <span class="font-bold text-emerald-400">5% 10% Vốn</span>
+          </div>
+        </div>
+
+        <!-- Copy Result Button -->
+        <button
+          id="btn-copy-result"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-[10px] bg-[#230c12] hover:bg-[#311119] border border-rose-500/35 text-rose-200 hover:text-white text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-[#f43f5e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+          </svg>
+          <span>Sao chép kết quả</span>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- 4. CARD 2: LỊCH SỬ PHÂN TÍCH PHIÊN -->
+    <section class="crimson-card rounded-2xl p-4 sm:p-5 space-y-3.5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-[#e11d48]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h2 class="text-xs font-bold tracking-wider uppercase text-white">
+            LỊCH SỬ PHÂN TÍCH PHIÊN
+          </h2>
+        </div>
+        <button
+          id="btn-clear-history"
+          type="button"
+          class="text-xs font-medium text-slate-400 hover:text-rose-300 transition cursor-pointer"
+        >
+          Xóa lịch sử
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        id="history-empty"
+        class="py-7 px-3 rounded-xl bg-[#0d070a]/80 border border-white/[0.04] text-center text-xs text-slate-500"
+      >
+        Chưa có mã MD5 nào được phân tích trong phiên này.
+      </div>
+
+      <!-- History Items List -->
+      <div id="history-list" class="hidden space-y-2 max-h-64 overflow-y-auto pr-0.5"></div>
+    </section>
+
+  </div>
+
+  <!-- Exact 9-Step Algorithm & UI Controller -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // BƯỚC 1 — HELPER FUNCTIONS
+      // =========================================================================
+      function rotl(x, r) {
+        r &= 31;
+        return r === 0 ? (x >>> 0) : (((x << r) | (x >>> (32 - r))) >>> 0);
+      }
+
+      function mix32(x) {
+        x = x >>> 0;
+        x ^= x >>> 16;
+        x = Math.imul(x, 0x7feb352d);
+        x ^= x >>> 15;
+        x = Math.imul(x, 0x846ca68b);
+        x ^= x >>> 16;
+        return x >>> 0;
+      }
+
+      function toBytes(hex) {
+        const bytes = new Array(16);
+        for (let i = 0; i < 16; i++) {
+          bytes[i] = parseInt(hex.slice(2 * i, 2 * i + 2), 16);
+        }
+        return bytes;
+      }
+
+      function toBitString(hex) {
+        let bits = '';
+        for (let i = 0; i < hex.length; i++) {
+          bits += parseInt(hex[i], 16).toString(2).padStart(4, '0');
+        }
+        return bits;
+      }
+
+      function normalize(v, s) {
+        return v / (Math.abs(v) + s);
+      }
+
+      function clamp(v, min, max) {
+        return Math.min(max, Math.max(min, v));
+      }
+
+      function sigmoid(x) {
+        return 1 / (1 + Math.exp(-x));
+      }
+
+      // =========================================================================
+      // BƯỚC 3 — 9 ĐẶC TRƯNG
+      // =========================================================================
+      function evenOdd(bytes) {
+        let even = 0;
+        for (let i = 0; i < bytes.length; i++) {
+          if (bytes[i] % 2 === 0) even++;
+        }
+        return even - (16 - even);
+      }
+
+      function highLow(bytes) {
+        let high = 0;
+        for (let i = 0; i < bytes.length; i++) {
+          if (bytes[i] >= 128) high++;
+        }
+        return high - (16 - high);
+      }
+
+      function momentum(bytes) {
+        let score = 0;
+        for (let i = 0; i <= 14; i++) {
+          if (bytes[i + 1] > bytes[i]) score++;
+          else score--;
+        }
+        return score;
+      }
+
+      function slidingPattern(bytes) {
+        let score = 0;
+        for (let i = 0; i <= 13; i++) {
+          const a = bytes[i];
+          const b = bytes[i + 1];
+          const c = bytes[i + 2];
+          if (a < b && b < c) score += 2;
+          else if (a > b && b > c) score -= 2;
+        }
+        return score;
+      }
+
+      function bitCluster(hex) {
+        const bits = toBitString(hex);
+        let run = 1;
+        let score = 0;
+        for (let i = 1; i < bits.length; i++) {
+          if (bits[i] === bits[i - 1]) {
+            run++;
+          } else {
+            score += run * run;
+            run = 1;
+          }
+        }
+        score += run * run;
+        return score;
+      }
+
+      function uniqueHexScore(hex) {
+        return new Set(hex).size;
+      }
+
+      function adjacentXor(bytes) {
+        let total = 0;
+        for (let i = 0; i <= 14; i++) {
+          total += (bytes[i] ^ bytes[i + 1]);
+        }
+        return total / 15;
+      }
+
+      function halfBalance(bytes) {
+        let first = 0;
+        let second = 0;
+        for (let i = 0; i < 8; i++) first += bytes[i];
+        for (let i = 8; i < 16; i++) second += bytes[i];
+        return first - second;
+      }
+
+      function nibbleSkew(hex) {
+        let low = 0;
+        let high = 0;
+        for (let i = 0; i < hex.length; i++) {
+          const v = parseInt(hex[i], 16);
+          if (v <= 7) low++;
+          else high++;
+        }
+        return high - low;
+      }
+
+      // =========================================================================
+      // BƯỚC 7 — PRIMES SET (1..251 chính xác theo đề bài)
+      // =========================================================================
+      const PRIMES = new Set([
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,
+        51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,
+        101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,
+        151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,193,194,195,196,197,198,199,200,
+        201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251
+      ]);
+
+      function run8Layers(h) {
+        // Layer 1
+        let s1 = 0;
+        for (let i = 0; i < 32; i++) s1 += parseInt(h[i], 16);
+        const l1 = { w: 1.0, vote: (s1 % 2 === 1) ? 1 : -1 };
+
+        // Layer 2
+        let xor2 = 0;
+        for (let i = 0; i <= 30; i += 2) xor2 ^= parseInt(h.slice(i, i + 2), 16);
+        const l2 = { w: 1.2, vote: ((xor2 & 1) === 1) ? 1 : -1 };
+
+        // Layer 3
+        let prime = 0;
+        let odd = 0;
+        for (let i = 0; i <= 30; i += 2) {
+          const b = parseInt(h.slice(i, i + 2), 16);
+          if (PRIMES.has(b)) prime++;
+          if (b % 2 === 1) odd++;
+        }
+        const l3 = { w: 0.9, vote: (prime >= odd) ? 1 : -1 };
+
+        // Layer 4
+        let wsum4 = 0;
+        for (let i = 0; i < 32; i++) wsum4 += parseInt(h[i], 16) * (i + 1);
+        const l4 = { w: 1.1, vote: (wsum4 % 3 !== 0) ? 1 : -1 };
+
+        // Layer 5
+        const f5 = new Array(16).fill(0);
+        for (let i = 0; i < h.length; i++) f5[parseInt(h[i], 16)]++;
+        let even5 = 0;
+        for (let i = 0; i < 16; i++) {
+          if (i % 2 === 0) even5 += f5[i];
+        }
+        const odd5 = 32 - even5;
+        const l5 = { w: 1.0, vote: (odd5 > even5) ? 1 : -1 };
+
+        // Layer 6
+        let m6 = 0;
+        for (let i = 0; i < h.length; i++) m6 = (m6 * 16 + parseInt(h[i], 16)) % 3;
+        const l6 = { w: 0.85, vote: (m6 === 1) ? 1 : -1 };
+
+        // Layer 7
+        let match7 = 0;
+        for (let i = 0; i < 16; i++) {
+          if (h[i] === h[31 - i]) match7++;
+        }
+        const l7 = { w: 0.7, vote: (match7 >= 8) ? 1 : -1 };
+
+        // Layer 8
+        const f8 = {};
+        for (let i = 0; i < h.length; i++) {
+          const ch = h[i];
+          f8[ch] = (f8[ch] || 0) + 1;
+        }
+        let ent = 0;
+        for (const k in f8) {
+          const p = f8[k] / 32;
+          ent -= p * Math.log2(p);
+        }
+        const l8 = { w: 0.95, vote: (ent > 3.6) ? 1 : -1 };
+
+        const layers = [l1, l2, l3, l4, l5, l6, l7, l8];
+        let tai = 0;
+        let xiu = 0;
+        let totalW = 0;
+        for (let i = 0; i < layers.length; i++) {
+          const L = layers[i];
+          totalW += L.w;
+          if (L.vote > 0) tai += L.w;
+          else xiu += L.w;
+        }
+
+        const taiPct = (tai / totalW) * 100;
+        const xiuPct = 100 - taiPct;
+        const diff = Math.abs(taiPct - xiuPct);
+        const confidence_layer = Math.round(50 + Math.min(diff * 0.9, 45));
+
+        let basePrediction = (taiPct >= xiuPct) ? 'Tài' : 'Xỉu';
+        if (Math.abs(taiPct - xiuPct) < 0.01) {
+          basePrediction = (parseInt(h[31], 16) % 2 === 1) ? 'Tài' : 'Xỉu';
+        }
+
+        let prediction_layer = basePrediction;
+        let mode_layer = 'normal';
+        if (confidence_layer >= 90) {
+          mode_layer = 'mega';
+        } else if (confidence_layer < 70) {
+          prediction_layer = (basePrediction === 'Tài') ? 'Xỉu' : 'Tài';
+          mode_layer = 'weak-reverse';
+        }
+
+        return {
+          layerTai: taiPct,
+          layerXiu: xiuPct,
+          layerMode: mode_layer
+        };
+      }
+
+      // =========================================================================
+      // THUẬT TOÁN PHÂN TÍCH ĐẦY ĐỦ (BƯỚC 0 -> BƯỚC 9)
+      // =========================================================================
+      function analyzeMD5(md5Input) {
+        // BƯỚC 0 — CHUẨN HÓA
+        const hash = md5Input.trim().toLowerCase();
+
+        // BƯỚC 2 — SEED TỪ MD5
+        const bytes = toBytes(hash);
+        let seed = 2166136261;
+        for (let i = 0; i < 16; i++) {
+          const b = bytes[i];
+          seed ^= b;
+          seed = Math.imul(seed, 16777619);
+          seed = mix32(seed ^ rotl(Math.imul(b + 1, i + 3), i % 13));
+        }
+        seed = seed >>> 0;
+
+        // BƯỚC 3 — 9 ĐẶC TRƯNG
+        const f1 = normalize(evenOdd(bytes), 5);
+        const f2 = normalize(highLow(bytes), 5);
+        const f3 = normalize(momentum(bytes), 8);
+        const f4 = normalize(slidingPattern(bytes), 8);
+        const f5 = (bitCluster(hash) - 380) / 200;
+        const f6 = normalize(uniqueHexScore(hash) - 8, 4);
+        const f7 = normalize(adjacentXor(bytes) - 127.5, 64);
+        const f8 = normalize(halfBalance(bytes), 300);
+        const f9 = normalize(nibbleSkew(hash), 8);
+
+        // BƯỚC 4 — TRỌNG SỐ TỪ SEED
+        const weights = new Array(9);
+        for (let k = 0; k < 9; k++) {
+          weights[k] = 1 + ((seed >>> k) & 1);
+        }
+
+        // BƯỚC 5 — CORE SCORE & CORE PROB
+        const score =
+          f1 * weights[0] +
+          f2 * weights[1] +
+          f3 * weights[2] +
+          f4 * weights[3] +
+          f5 * weights[4] +
+          f6 * weights[5] +
+          f7 * weights[6] +
+          f8 * weights[7] +
+          f9 * weights[8];
+
+        let coreProb = sigmoid(score);
+        coreProb = 0.18 + coreProb * 0.64;
+        coreProb = clamp(coreProb, 0.18, 0.82);
+        const coreTai = coreProb * 100;
+
+        // BƯỚC 6 — PHÂN TÍCH BIT (VIP)
+        const bitStr = toBitString(hash);
+        const totalBits = 128;
+        let countOnes = 0;
+        let weightedSum = 0;
+        for (let i = 0; i < totalBits; i++) {
+          if (bitStr[i] === '1') {
+            countOnes++;
+            weightedSum += (i + 1);
+          }
+        }
+        const isTai = (weightedSum % 2 === 0);
+        const expectedOnes = 64;
+        const deviation = Math.abs(countOnes - expectedOnes) / expectedOnes;
+        let trust = 99 - Math.floor(deviation * 8);
+
+        let transitions = 0;
+        for (let i = 1; i < totalBits; i++) {
+          if (bitStr[i] !== bitStr[i - 1]) transitions++;
+        }
+        const transitionRatio = transitions / 127;
+        if (transitionRatio > 0.45 && transitionRatio < 0.55) {
+          trust = Math.min(99, trust + 2);
+        } else if (transitionRatio > 0.65 || transitionRatio < 0.35) {
+          trust = Math.max(93, trust - 1);
+        }
+        const micro = (weightedSum % 5) - 2;
+        trust = Math.min(99, Math.max(93, trust + micro));
+
+        const bitPercent = trust;
+        const bitTai = isTai ? bitPercent : 100 - bitPercent;
+
+        // BƯỚC 7 — 8 LAYER
+        const { layerTai, layerMode } = run8Layers(hash);
+
+        // BƯỚC 8 — KẾT HỢP
+        let finalTai = coreTai * 0.45 + bitTai * 0.20 + layerTai * 0.35;
+        finalTai = Math.round(finalTai);
+        const finalXiu = 100 - finalTai;
+
+        const prediction = (finalTai >= finalXiu) ? 'TÀI' : 'XỈU';
+        const difference = Math.abs(finalTai - finalXiu);
+        const confidence = clamp(Math.round(50 + difference * 1.25), 50, 99);
+
+        // BƯỚC 9 — XUẤT KẾT QUẢ
+        const shortPred = prediction === 'TÀI' ? 'T' : 'X';
+        const formattedOutput = `Dự Đoán : ${shortPred}\nĐộ Tin Cậy : ${confidence}%\nVào Tiền : 5% 10% Vốn`;
+
+        return {
+          hash,
+          shortPred,
+          prediction,
+          confidence,
+          mode: layerMode,
+          formattedOutput,
+          timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        };
+      }
+
+      // =========================================================================
+      // UI & INTERACTION CONTROLLER
+      // =========================================================================
+      const md5Input = document.getElementById('md5-input');
+      const charCounter = document.getElementById('char-counter');
+      const errorNotice = document.getElementById('error-notice');
+      const btnPaste = document.getElementById('btn-paste');
+      const btnClear = document.getElementById('btn-clear');
+      const btnAnalyze = document.getElementById('btn-analyze');
+
+      const resultSection = document.getElementById('result-section');
+      const analyzedHashShort = document.getElementById('analyzed-hash-short');
+      const predFullLabel = document.getElementById('pred-full-label');
+      const predShortBadge = document.getElementById('pred-short-badge');
+      const confidenceVal = document.getElementById('confidence-val');
+      const confidenceBar = document.getElementById('confidence-bar');
+      const btnCopyResult = document.getElementById('btn-copy-result');
+
+      const historyEmpty = document.getElementById('history-empty');
+      const historyList = document.getElementById('history-list');
+      const btnClearHistory = document.getElementById('btn-clear-history');
+
+      const MD5_REGEX = /^[0-9a-fA-F]{32}$/;
+      const HEX_ONLY_REGEX = /^[0-9a-fA-F]*$/;
+
+      let sessionHistory = [];
+      let currentOutputText = '';
+      let toastTimeout = null;
+
+      function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+        const toastIcon = document.getElementById('toast-icon');
+
+        toastMsg.textContent = message;
+        toastIcon.className = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.add('translate-y-20', 'opacity-0');
+        }, 2600);
+      }
+
+      function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast('Đã sao chép kết quả chuẩn mẫu!', 'success');
+        } catch (err) {
+          showToast('Không thể sao chép tự động.', 'error');
+        }
+        document.body.removeChild(textarea);
+      }
+
+      function updateCounterState() {
+        const raw = md5Input.value.trim();
+        const len = raw.length;
+        charCounter.textContent = `${len} / 32`;
+
+        if (MD5_REGEX.test(raw)) {
+          charCounter.className = 'px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 font-mono text-[11px] font-semibold text-emerald-300 transition-colors';
+          errorNotice.classList.add('hidden');
+          return true;
+        } else if (len > 0 && !HEX_ONLY_REGEX.test(raw)) {
+          charCounter.className = 'px-2.5 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/40 font-mono text-[11px] font-semibold text-rose-300 transition-colors';
+          return false;
+        } else {
+          charCounter.className = 'px-2.5 py-0.5 rounded-md bg-[#1e1519] border border-white/10 font-mono text-[11px] font-semibold text-slate-300 transition-colors';
+          return false;
+        }
+      }
+
+      function renderResult(res) {
+        currentOutputText = res.formattedOutput;
+        resultSection.classList.remove('hidden');
+
+        analyzedHashShort.textContent = `MD5: ${res.hash.slice(0, 6)}...${res.hash.slice(-6)}`;
+
+        const isTai = res.prediction === 'TÀI';
+        predFullLabel.textContent = res.prediction;
+        predShortBadge.textContent = res.shortPred;
+
+        if (isTai) {
+          predFullLabel.className = 'text-xl sm:text-2xl font-black tracking-wide text-amber-400';
+          predShortBadge.className = 'px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-rose-500/25 text-rose-300 border border-rose-500/40';
+        } else {
+          predFullLabel.className = 'text-xl sm:text-2xl font-black tracking-wide text-emerald-300';
+          predShortBadge.className = 'px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        }
+
+        confidenceVal.textContent = `${res.confidence}%`;
+        confidenceBar.style.width = `${res.confidence}%`;
+      }
+
+      function addSessionHistory(res) {
+        sessionHistory = sessionHistory.filter(item => item.hash !== res.hash);
+        sessionHistory.unshift(res);
+        if (sessionHistory.length > 30) sessionHistory.pop();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        if (sessionHistory.length === 0) {
+          historyEmpty.classList.remove('hidden');
+          historyList.classList.add('hidden');
+          historyList.innerHTML = '';
+          return;
+        }
+
+        historyEmpty.classList.add('hidden');
+        historyList.classList.remove('hidden');
+
+        historyList.innerHTML = sessionHistory.map(item => {
+          const isTai = item.shortPred === 'T';
+          const badgeStyle = isTai
+            ? 'bg-rose-500/20 text-rose-300 border-rose-500/35'
+            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35';
+
+          return `
+            <div data-hash="${item.hash}" class="history-row flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d070a]/90 hover:bg-[#170c11] border border-white/[0.06] hover:border-rose-500/35 transition cursor-pointer">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="px-2 py-0.5 rounded-md font-mono text-[11px] font-extrabold border shrink-0 ${badgeStyle}">
+                  ${item.prediction} (${item.shortPred})
+                </span>
+                <span class="font-mono text-xs text-slate-300 truncate">
+                  ${item.hash.slice(0, 6)}...${item.hash.slice(-6)}
+                </span>
+              </div>
+              <div class="flex items-center gap-2.5 shrink-0 font-mono text-[11px]">
+                <span class="text-rose-400 font-bold">${item.confidence}%</span>
+                <span class="text-slate-500">${item.timestamp}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.querySelectorAll('.history-row').forEach(row => {
+          row.addEventListener('click', () => {
+            const h = row.getAttribute('data-hash');
+            md5Input.value = h;
+            updateCounterState();
+            const res = analyzeMD5(h);
+            renderResult(res);
+            copyToClipboard(res.formattedOutput);
+          });
+        });
+      }
+
+      function handleAnalyze() {
+        const raw = md5Input.value.trim();
+        if (!MD5_REGEX.test(raw)) {
+          errorNotice.classList.remove('hidden');
+          resultSection.classList.add('hidden');
+          md5Input.focus();
+          return;
+        }
+        errorNotice.classList.add('hidden');
+        const res = analyzeMD5(raw);
+        renderResult(res);
+        addSessionHistory(res);
+      }
+
+      // Event Listeners
+      md5Input.addEventListener('input', updateCounterState);
+
+      md5Input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAnalyze();
+        }
+      });
+
+      btnAnalyze.addEventListener('click', handleAnalyze);
+
+      btnPaste.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const text = await navigator.clipboard.readText();
+            md5Input.value = text.trim();
+            if (updateCounterState()) {
+              handleAnalyze();
+            } else {
+              showToast('Đã dán nội dung từ bộ nhớ tạm.');
+            }
+          } else {
+            md5Input.focus();
+            showToast('Vui lòng dán mã MD5 vào ô nhập.');
+          }
+        } catch (err) {
+          md5Input.focus();
+          showToast('Vui lòng dán mã MD5 vào ô nhập.');
+        }
+      });
+
+      btnClear.addEventListener('click', () => {
+        md5Input.value = '';
+        updateCounterState();
+        errorNotice.classList.add('hidden');
+        resultSection.classList.add('hidden');
+        md5Input.focus();
+      });
+
+      btnCopyResult.addEventListener('click', () => {
+        if (currentOutputText) {
+          copyToClipboard(currentOutputText);
+        }
+      });
+
+      btnClearHistory.addEventListener('click', () => {
+        sessionHistory = [];
+        renderHistory();
+        showToast('Đã xóa lịch sử phiên.');
+      });
+
+      // Init
+      updateCounterState();
+    })();
+  </script>
+</body>
+</html>
